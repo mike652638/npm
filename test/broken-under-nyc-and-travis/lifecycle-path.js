@@ -101,6 +101,9 @@ function checkPath (withDirOfCurrentNode, prependNodePathSetting, t) {
     var pathSplit = process.platform === 'win32' ? ';' : ':'
     var root = path.resolve(__dirname, '../..')
     var actual = observedPath.split(pathSplit).map(function (p) {
+      if (p.indexOf(pkg) === 0) {
+        p = '{{PKG}}' + p.substr(pkg.length)
+      }
       if (p.indexOf(root) === 0) {
         p = '{{ROOT}}' + p.substr(root.length)
       }
@@ -113,7 +116,7 @@ function checkPath (withDirOfCurrentNode, prependNodePathSetting, t) {
 
     // get the ones we tacked on, then the system-specific requirements
     var expectedPaths = ['{{ROOT}}/bin/node-gyp-bin',
-                         '{{ROOT}}/test/tap/lifecycle-path/node_modules/.bin']
+                         '{{PKG}}/node_modules/.bin']
 
     // Check that the behaviour matches the configuration that was actually
     // used by the child process, as the coverage tooling may set the
@@ -125,7 +128,7 @@ function checkPath (withDirOfCurrentNode, prependNodePathSetting, t) {
     if (prependNodePathSetting === 'warn-only') {
       if (withDirOfCurrentNode) {
         t.match(stderr, /npm WARN lifecycle/, 'spit out a warning')
-        t.match(stderr, /npm is using .*test.tap.lifecycle-path.node-bin.my_bundled_node(.exe)?/, 'mention the path of the binary npm itself is using.')
+        t.match(stderr, /npm is using .*node-bin.my_bundled_node(.exe)?/, 'mention the path of the binary npm itself is using.')
         if (withDirOfCurrentNode === 'extra-node') {
           var regex = new RegExp(
             'The node binary used for scripts is.*' +
@@ -140,7 +143,7 @@ function checkPath (withDirOfCurrentNode, prependNodePathSetting, t) {
     }
 
     if (withDirOfCurrentNode && realPrependNodePathSetting) {
-      expectedPaths.push('{{ROOT}}/test/tap/lifecycle-path/node-bin/my_bundled_node')
+      expectedPaths.push('{{PKG}}/node-bin/my_bundled_node')
     }
     var expect = expectedPaths.concat(newPATH.split(pathSplit)).map(function (p) {
       return p.replace(/\\/g, '/')
